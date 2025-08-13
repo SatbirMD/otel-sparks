@@ -1,0 +1,41 @@
+name: Daily OpenTelemetry Java Snippet
+
+on:
+  schedule:
+    - cron: '0 8 * * *' # Every day at 8am UTC
+  workflow_dispatch:
+
+jobs:
+  commit-snippet:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Generate Java OpenTelemetry snippet
+      run: |
+        mkdir -p snippets
+        cat <<EOF > snippets/OpenTelemetryExample_$(date +'%Y%m%d').java
+        // OpenTelemetry Java Example for $(date +'%Y-%m-%d')
+        import io.opentelemetry.api.GlobalOpenTelemetry;
+        import io.opentelemetry.api.trace.Span;
+        import io.opentelemetry.api.trace.Tracer;
+
+        public class OpenTelemetryExample_$(date +'%Y%m%d') {
+            public static void main(String[] args) {
+                Tracer tracer = GlobalOpenTelemetry.getTracer("exampleTracer");
+                Span span = tracer.spanBuilder("dailySpan").startSpan();
+                span.setAttribute("example.date", "$(date +'%Y-%m-%d')");
+                System.out.println("Hello from OpenTelemetry Java on $(date +'%Y-%m-%d')");
+                span.end();
+            }
+        }
+        EOF
+
+    - name: Commit and push snippet
+      run: |
+        git config --global user.name 'GitHub Actions'
+        git config --global user.email 'actions@github.com'
+        git add snippets/OpenTelemetryExample_$(date +'%Y%m%d').java
+        git commit -m "Add OpenTelemetry Java snippet for $(date +'%Y-%m-%d')" || echo "No changes to commit"
+        git push
